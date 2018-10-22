@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: gitstatus.py
+# FILE: git.py
 # AUTHOR: Kristijan Husak <husakkristijan at gmail.com>
 # License: MIT license
 # ============================================================================
@@ -66,7 +66,7 @@ class Column(Base):
     def __init__(self, vim: Nvim) -> None:
         super().__init__(vim)
 
-        self.name = 'gitstatus'
+        self.name = 'git'
 
     def get(self, context: Context, candidate: dict) -> str:
         args = ['git', 'status', '--porcelain', candidate['action__path']]
@@ -77,7 +77,7 @@ class Column(Base):
 
         return INDICATORS[_get_indicator(line[0], line[1])]['icon']
 
-    def length(self) -> int:
+    def length(self, context) -> int:
         return 2
 
     def highlight(self) -> None:
