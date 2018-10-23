@@ -74,14 +74,18 @@ class Column(Base):
         self.cache = run_command(['git', 'status', '--porcelain', path])
 
     def get(self, context: Context, candidate: dict) -> str:
+        default = '  '
         if candidate.get('is_root', False):
             self._cache_status(candidate['action__path'])
-            return '  '
+            return default
+
+        if not self.cache:
+            return default
 
         entry = self.find_cache_entry(candidate)
 
         if not entry:
-            return '  '
+            return default
 
         return INDICATORS[_get_indicator(entry[0], entry[1])]['icon']
 
@@ -99,10 +103,12 @@ class Column(Base):
 
     def highlight(self) -> None:
         icons = '\\\|'.join([x['icon'][:1] for x in INDICATORS.values()])
-        self.vim.command('nnoremap ]f :call search(\'\({}\)\')<CR>'
-                         .format(icons))
-        self.vim.command('nnoremap [f :call search(\'\({}\)\', \'b\')<CR>'
-                         .format(icons))
+        self.vim.command(
+            'nnoremap <silent><buffer> ]f :call search(\'\({}\)\')<CR>'
+            .format(icons))
+        self.vim.command(
+            'nnoremap <silent><buffer> [f :call search(\'\({}\)\', \'b\')<CR>'
+            .format(icons))
         for name, indicator in INDICATORS.items():
             self.vim.command(('syntax match {0}_{1} /[{2}]/ ' +
                               'contained containedin={0}').format(
