@@ -9,57 +9,7 @@ import subprocess
 from defx.base.column import Base
 from defx.context import Context
 from neovim import Nvim
-
-COLORS = {
-    'Modified': 'guifg=#fabd2f ctermfg=214',
-    'Added': 'guifg=#b8bb26 ctermfg=142',
-    'Unmerged': 'guifg=#fb4934 ctermfg=167',
-    'Default': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE'
-}
-
-INDICATORS = {
-    'Modified': {'icon': '✹ ', 'color': COLORS['Modified']},
-    'Staged': {'icon': '✚ ', 'color': COLORS['Added']},
-    'Untracked': {'icon': '✭ ', 'color': COLORS['Default']},
-    'Renamed': {'icon': '➜ ', 'color': COLORS['Modified']},
-    'Unmerged': {'icon': '═ ', 'color': COLORS['Unmerged']},
-    'Ignored': {'icon': '☒ ', 'color': COLORS['Default']},
-    'Unknown': {'icon': '? ', 'color': COLORS['Default']},
-}
-
-
-def _get_indicator(us: str, them: str) -> str:
-    if us == '?' and them == '?':
-        return 'Untracked'
-    elif us == ' ' and them == 'M':
-        return 'Modified'
-    elif us == '[MAC]':
-        return 'Staged'
-    elif us == 'R':
-        return 'Renamed'
-    elif us == '!':
-        return 'Ignored'
-    elif (us == 'U' or them == 'U' or us == 'A' and them == 'A'
-          or us == 'D' and them == 'D'):
-        return 'Unmerged'
-    else:
-        return 'Unknown'
-
-
-def run_command(commands: typing.List[str]) -> typing.List[str]:
-    try:
-        p = subprocess.run(commands,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError:
-        return []
-
-    decoded = p.stdout.decode('utf-8')
-
-    if not decoded:
-        return []
-
-    return [line for line in decoded.split('\n') if line != '']
+from functools import cmp_to_key
 
 
 class Column(Base):
@@ -69,51 +19,105 @@ class Column(Base):
 
         self.name = 'git'
         self.cache: typing.List[str] = []
-
-    def _cache_status(self, path: str) -> None:
-        self.cache = run_command(['git', 'status', '--porcelain', '-u', path])
+        self.cwd = self.vim.call('getcwd')
+        self.indicators = self.vim.vars['defx_git#indicators']
+        self.column_length = self.vim.vars['defx_git#column_length']
+        self.show_ignored = self.vim.vars['defx_git#show_ignored']
+        self.colors = {
+            'Modified': 'guifg=#fabd2f ctermfg=214',
+            'Staged': 'guifg=#b8bb26 ctermfg=142',
+            'Renamed': 'guifg=#fabd2f ctermfg=214',
+            'Unmerged': 'guifg=#fb4934 ctermfg=167',
+            'Untracked': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
+            'Ignored': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
+            'Unknown': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE'
+        }
 
     def get(self, context: Context, candidate: dict) -> str:
-        default = '  '
+        default = self.format('')
         if candidate.get('is_root', False):
-            self._cache_status(candidate['action__path'])
+            self.cache_status(candidate['action__path'])
             return default
 
         if not self.cache:
             return default
 
-        entry = self.find_cache_entry(candidate)
+        entry = self.find_in_cache(candidate)
 
         if not entry:
             return default
 
-        return INDICATORS[_get_indicator(entry[0], entry[1])]['icon']
+        return self.format(
+            self.indicators[self.get_indicator_name(entry[0], entry[1])]
+        )
 
-    def find_cache_entry(self, candidate: dict) -> str:
-        cwd = self.vim.call('getcwd')
-        path = str(candidate['action__path']).replace(f'{cwd}/', '')
+    def length(self, context: Context) -> int:
+        return self.column_length
+
+    def highlight(self) -> None:
+        for name, icon in self.indicators.items():
+            self.vim.command((
+                'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
+            ).format(self.syntax_name, name, icon))
+
+            self.vim.command('highlight default {0}_{1} {2}'.format(
+                self.syntax_name, name, self.colors[name]
+            ))
+
+    def find_in_cache(self, candidate: dict) -> str:
+        path = str(candidate['action__path']).replace(f'{self.cwd}/', '')
         for item in self.cache:
-            if path in item[3:]:
+            if item[3:].startswith(path):
                 return item
 
         return ''
 
-    def length(self, context: Context) -> int:
-        return 2
+    def cache_status(self, path: str) -> None:
+        self.cache = []
+        try:
+            cmd = ['git', 'status', '--porcelain', '-u']
+            if self.show_ignored:
+                cmd += ['--ignored']
 
-    def highlight(self) -> None:
-        icons = '\\\|'.join([x['icon'][:1] for x in INDICATORS.values()])
-        self.vim.command(
-            'nnoremap <silent><buffer> ]f :call search(\'\({}\)\')<CR>'
-            .format(icons))
-        self.vim.command(
-            'nnoremap <silent><buffer> [f :call search(\'\({}\)\', \'b\')<CR>'
-            .format(icons))
-        for name, indicator in INDICATORS.items():
-            self.vim.command(('syntax match {0}_{1} /[{2}]/ ' +
-                              'contained containedin={0}').format(
-                                 self.syntax_name, name, indicator['icon']
-                             ))
-            self.vim.command('highlight default {0}_{1} {2}'.format(
-                self.syntax_name, name, indicator['color']
-            ))
+            cmd += [path]
+            p = subprocess.run(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            return None
+
+        decoded = p.stdout.decode('utf-8')
+
+        if not decoded:
+            return None
+
+        results = [line for line in decoded.split('\n') if line != '']
+        self.cache = sorted(results, key=cmp_to_key(self.sort))
+
+    def sort(self, a, b) -> int:
+        if a[0] == 'U' or a[1] == 'U':
+            return -1
+
+        if (a[0] == 'M' or a[1] == 'M') and not (b[0] == 'U' or b[1] == 'U'):
+            return -1
+
+        return 1
+
+    def format(self, column: str) -> str:
+        return format(column, f'<{self.column_length}')
+
+    def get_indicator_name(self, us: str, them: str) -> str:
+        if us == '?' and them == '?':
+            return 'Untracked'
+        elif us == ' ' and them == 'M':
+            return 'Modified'
+        elif us in ['M', 'A', 'C']:
+            return 'Staged'
+        elif us == 'R':
+            return 'Renamed'
+        elif us == '!':
+            return 'Ignored'
+        elif (us == 'U' or them == 'U' or us == 'A' and them == 'A'
+              or us == 'D' and them == 'D'):
+            return 'Unmerged'
+        else:
+            return 'Unknown'
