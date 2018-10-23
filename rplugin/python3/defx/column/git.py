@@ -69,10 +69,14 @@ class Column(Base):
         self.name = 'git'
 
     def get(self, context: Context, candidate: dict) -> str:
-        args = ['git', 'status', '--porcelain', candidate['action__path']]
-        line = run_command(args)
+        if candidate.get('is_root', False):
+            return '  '
 
-        if not line or candidate.get('is_root', False):
+        line = run_command([
+            'git', 'status', '--porcelain', candidate['action__path']
+        ])
+
+        if not line:
             return '  '
 
         return INDICATORS[_get_indicator(line[0], line[1])]['icon']
