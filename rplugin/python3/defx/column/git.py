@@ -71,7 +71,7 @@ class Column(Base):
         self.cache: typing.List[str] = []
 
     def _cache_status(self, path: str) -> None:
-        self.cache = run_command(['git', 'status', '--porcelain', path])
+        self.cache = run_command(['git', 'status', '--porcelain', '-u', path])
 
     def get(self, context: Context, candidate: dict) -> str:
         default = '  '
