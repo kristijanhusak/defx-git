@@ -4,6 +4,7 @@
 # License: MIT license
 # ============================================================================
 
+import typing
 import subprocess
 from defx.base.column import Base
 from defx.context import Context
@@ -27,7 +28,7 @@ INDICATORS = {
 }
 
 
-def _get_indicator(us, them):
+def _get_indicator(us: str, them: str) -> str:
     if us == '?' and them == '?':
         return 'Untracked'
     elif us == ' ' and them == 'M':
@@ -45,7 +46,7 @@ def _get_indicator(us, them):
         return 'Unknown'
 
 
-def run_command(commands, encoding='utf-8'):
+def run_command(commands: typing.List[str]) -> typing.List[str]:
     try:
         p = subprocess.run(commands,
                            stdout=subprocess.PIPE,
@@ -53,12 +54,12 @@ def run_command(commands, encoding='utf-8'):
     except subprocess.CalledProcessError:
         return []
 
-    decoded = p.stdout.decode(encoding)
+    decoded = p.stdout.decode('utf-8')
 
     if not decoded:
-        return ''
+        return []
 
-    return decoded.split('\n')[0]
+    return [line for line in decoded.split('\n') if line != '']
 
 
 class Column(Base):
@@ -67,21 +68,33 @@ class Column(Base):
         super().__init__(vim)
 
         self.name = 'git'
+        self.cache: typing.List[str] = []
+
+    def _cache_status(self, path: str) -> None:
+        self.cache = run_command(['git', 'status', '--porcelain', path])
 
     def get(self, context: Context, candidate: dict) -> str:
         if candidate.get('is_root', False):
+            self._cache_status(candidate['action__path'])
             return '  '
 
-        line = run_command([
-            'git', 'status', '--porcelain', candidate['action__path']
-        ])
+        entry = self.find_cache_entry(candidate)
 
-        if not line:
+        if not entry:
             return '  '
 
-        return INDICATORS[_get_indicator(line[0], line[1])]['icon']
+        return INDICATORS[_get_indicator(entry[0], entry[1])]['icon']
 
-    def length(self, context) -> int:
+    def find_cache_entry(self, candidate: dict) -> str:
+        cwd = self.vim.call('getcwd')
+        path = str(candidate['action__path']).replace(f'{cwd}/', '')
+        for item in self.cache:
+            if path in item[3:]:
+                return item
+
+        return ''
+
+    def length(self, context: Context) -> int:
         return 2
 
     def highlight(self) -> None:
