@@ -1,6 +1,12 @@
 # defx-git
 Git status implementation for [defx.nvim](http://github.com/Shougo/defx.nvim).
 
+## Usage
+Just append `git` to your columns when starting defx:
+```
+:Defx -columns=git:mark:filename:type
+```
+
 ## Options
 ### g:defx_git#indicators
 
@@ -66,6 +72,6 @@ There are two mappings:
 If these are not manually mapped by the user, defaults are:
 
 ```vimL
-nnoremap <buffer><silent> [c <Plug>(defx-git-next)
+nnoremap <buffer><silent> [c <Plug>(defx-git-prev)
 nnoremap <buffer><silent> ]c <Plug>(defx-git-next)
 ```
