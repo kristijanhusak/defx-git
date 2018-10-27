@@ -66,6 +66,7 @@ class Column(Base):
 
     def find_in_cache(self, candidate: dict) -> str:
         path = str(candidate['action__path']).replace(f'{self.cwd}/', '')
+        path += '/' if candidate['is_directory'] else ''
         for item in self.cache:
             if item[3:].startswith(path):
                 return item
