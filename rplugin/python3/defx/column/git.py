@@ -6,7 +6,6 @@
 
 import typing
 import subprocess
-import os
 from defx.base.column import Base
 from defx.context import Context
 from neovim import Nvim
@@ -20,7 +19,7 @@ class Column(Base):
 
         self.name = 'git'
         self.cache: typing.List[str] = []
-        self.git_root = None
+        self.git_root = ''
         self.indicators = self.vim.vars['defx_git#indicators']
         self.column_length = self.vim.vars['defx_git#column_length']
         self.show_ignored = self.vim.vars['defx_git#show_ignored']
@@ -37,14 +36,8 @@ class Column(Base):
     def get(self, context: Context, candidate: dict) -> str:
         default = self.format('')
         if candidate.get('is_root', False):
-            if self.git_root is not None and str(candidate['action__path']).startswith(self.git_root):
-                return default
-
-            git_root = self.find_git_root(str(candidate['action__path']))
-            if git_root is not self.git_root:
-                self.git_root = git_root
-                self.cache_status(self.git_root)
-                return default
+            self.cache_status(candidate['action__path'])
+            return default
 
         if not self.cache:
             return default
@@ -83,38 +76,21 @@ class Column(Base):
     def cache_status(self, path: str) -> None:
         self.cache = []
 
-        if path is None:
+        if not self.git_root or not str(path).startswith(self.git_root):
+            self.git_root = self.run_cmd(
+                ['git', 'rev-parse', '--show-toplevel'], path
+            )
+
+        if not self.git_root:
             return None
 
-        try:
-            cmd = ['git', 'status', '--porcelain', '-u']
-            if self.show_ignored:
-                cmd += ['--ignored']
-            p = subprocess.run(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=path)
-        except subprocess.CalledProcessError:
-            return None
+        cmd = ['git', 'status', '--porcelain', '-u']
+        if self.show_ignored:
+            cmd += ['--ignored']
 
-        decoded = p.stdout.decode('utf-8')
-
-        if not decoded:
-            return None
-
-        results = [line for line in decoded.split('\n') if line != '']
+        status = self.run_cmd(cmd, self.git_root)
+        results = [line for line in status.split('\n') if line != '']
         self.cache = sorted(results, key=cmp_to_key(self.sort))
-
-    def find_git_root(self, path) -> str:
-        try:
-            p = subprocess.run(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE, stderr=open(os.devnull, 'w'), cwd=path)
-        except subprocess.CalledProcessError:
-            return None
-
-        decoded = p.stdout.decode('utf-8')
-
-        if not decoded:
-            return None
-
-        return decoded.strip('\n')
 
     def sort(self, a, b) -> int:
         if a[0] == 'U' or a[1] == 'U':
@@ -144,3 +120,17 @@ class Column(Base):
             return 'Unmerged'
         else:
             return 'Unknown'
+
+    def run_cmd(self, cmd: typing.List[str], cwd=None) -> str:
+        try:
+            p = subprocess.run(cmd, stdout=subprocess.PIPE,
+                               stderr=subprocess.DEVNULL, cwd=cwd)
+        except subprocess.CalledProcessError:
+            return ''
+
+        decoded = p.stdout.decode('utf-8')
+
+        if not decoded:
+            return ''
+
+        return decoded.strip('\n')
