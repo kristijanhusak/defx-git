@@ -99,6 +99,10 @@ class Column(Base):
         if (a[0] == 'M' or a[1] == 'M') and not (b[0] == 'U' or b[1] == 'U'):
             return -1
 
+        if ((a[0] == '?' and a[1] == '?') and not
+                (b[0] in ['M', 'U'] or b[1] in ['M', 'U'])):
+            return -1
+
         return 1
 
     def format(self, column: str) -> str:
