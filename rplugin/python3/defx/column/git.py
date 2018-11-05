@@ -28,6 +28,7 @@ class Column(Base):
             'Staged': 'guifg=#b8bb26 ctermfg=142',
             'Renamed': 'guifg=#fabd2f ctermfg=214',
             'Unmerged': 'guifg=#fb4934 ctermfg=167',
+            'Deleted': 'guifg=#fb4934 ctermfg=167',
             'Untracked': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
             'Ignored': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
             'Unknown': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE'
@@ -122,6 +123,8 @@ class Column(Base):
         elif (us == 'U' or them == 'U' or us == 'A' and them == 'A'
               or us == 'D' and them == 'D'):
             return 'Unmerged'
+        elif them == 'D':
+            return 'Deleted'
         else:
             return 'Unknown'
 

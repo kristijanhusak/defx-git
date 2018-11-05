@@ -11,6 +11,7 @@ let g:defx_git#indicators = get(g:, 'defx_git#indicators', {
       \ 'Renamed'   : '➜',
       \ 'Unmerged'  : '═',
       \ 'Ignored'   : '☒',
+      \ 'Deleted'   : '✖',
       \ 'Unknown'   : '?'
       \ })
 

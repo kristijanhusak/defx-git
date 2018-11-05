@@ -19,6 +19,7 @@ let g:defx_git#indicators = {
   \ 'Renamed'   : '➜',
   \ 'Unmerged'  : '═',
   \ 'Ignored'   : '☒',
+  \ 'Deleted'   : '✖',
   \ 'Unknown'   : '?'
   \ })
 ```
@@ -53,6 +54,7 @@ hi Defx_git_Unknown guibg=NONE guifg=NONE ctermbg=NONE ctermfg=NONE
 hi Defx_git_Renamed ctermfg=214 guifg=#fabd2f
 hi Defx_git_Modified ctermfg=214 guifg=#fabd2f
 hi Defx_git_Unmerged ctermfg=167 guifg=#fb4934
+hi Defx_git_Deleted ctermfg=167 guifg=#fb4934
 hi Defx_git_Staged ctermfg=142 guifg=#b8bb26
 ```
 
