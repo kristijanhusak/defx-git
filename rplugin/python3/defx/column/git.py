@@ -69,7 +69,11 @@ class Column(Base):
         path = str(candidate['action__path']).replace(f'{self.git_root}/', '')
         path += '/' if candidate['is_directory'] else ''
         for item in self.cache:
-            if item[3:].startswith(path):
+            item_path = item[3:]
+            if item[0] == 'R':
+                item_path = item_path.split(' -> ')[1]
+
+            if item_path.startswith(path):
                 return item
 
         return ''
