@@ -1,3 +1,4 @@
+scriptencoding utf-8
 if exists('b:defx_git_loaded')
   finish
 endif
@@ -15,7 +16,7 @@ let g:defx_git#indicators = get(g:, 'defx_git#indicators', {
       \ 'Unknown'   : '?'
       \ })
 
-let g:defx_git#column_length = get(g:, 'defx_git#column_length', 2)
+let g:defx_git#column_length = get(g:, 'defx_git#column_length', 1)
 let g:defx_git#show_ignored = get(g:, 'defx_git#show_ignored', 0)
 
 let s:icons = join(values(g:defx_git#indicators), '\|')
