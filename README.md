@@ -26,9 +26,9 @@ let g:defx_git#indicators = {
 
 ### g:defx_git#column_length
 
-How many space should git column take. Default is `2`:
+How many space should git column take. Default is `1` (Defx adds a single space between columns):
 ```vimL
-let g:defx_git#column_length = 2
+let g:defx_git#column_length = 1
 ```
 Missing characters to match this length are populated with spaces, which means
 `✹` becomes `✹ `, etc.
