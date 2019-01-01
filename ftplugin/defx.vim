@@ -18,6 +18,7 @@ let g:defx_git#indicators = get(g:, 'defx_git#indicators', {
 
 let g:defx_git#column_length = get(g:, 'defx_git#column_length', 1)
 let g:defx_git#show_ignored = get(g:, 'defx_git#show_ignored', 0)
+let g:defx_git#raw_mode = get(g:, 'defx_git#raw_mode', 0)
 
 let s:icons = join(values(g:defx_git#indicators), '\|')
 

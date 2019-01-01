@@ -43,6 +43,14 @@ This flag determines if ignored files should be marked with indicator. Default i
 let g:defx_git#show_ignored = 0
 ```
 
+### g:defx_git#raw_mode
+
+Show git status in raw mode (Same as first two chars of `git status --porcelain` command). Default is `0`:
+
+```vimL
+let g:defx_git#raw_mode = 1
+```
+
 ## Highlighting
 
 Each indicator type can be overridden with the custom highlight. These are the defaults:

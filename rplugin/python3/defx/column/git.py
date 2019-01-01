@@ -21,18 +21,45 @@ class Column(Base):
         self.cache: typing.List[str] = []
         self.git_root = ''
         self.indicators = self.vim.vars['defx_git#indicators']
-        self.column_length = self.vim.vars['defx_git#column_length']
         self.show_ignored = self.vim.vars['defx_git#show_ignored']
+        self.raw_mode = self.vim.vars['defx_git#raw_mode']
         self.colors = {
-            'Modified': 'guifg=#fabd2f ctermfg=214',
-            'Staged': 'guifg=#b8bb26 ctermfg=142',
-            'Renamed': 'guifg=#fabd2f ctermfg=214',
-            'Unmerged': 'guifg=#fb4934 ctermfg=167',
-            'Deleted': 'guifg=#fb4934 ctermfg=167',
-            'Untracked': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
-            'Ignored': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
-            'Unknown': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE'
+            'Modified': {
+                'color': 'guifg=#fabd2f ctermfg=214',
+                'match': ' M'
+            },
+            'Staged': {
+                'color': 'guifg=#b8bb26 ctermfg=142',
+                'match': '\(M\|A\|C\).'
+            },
+            'Renamed': {
+                'color': 'guifg=#fabd2f ctermfg=214',
+                'match': 'R.'
+            },
+            'Unmerged': {
+                'color': 'guifg=#fb4934 ctermfg=167',
+                'match': '\(UU\|AA\|DD\)'
+            },
+            'Deleted': {
+                'color': 'guifg=#fb4934 ctermfg=167',
+                'match': ' D'
+            },
+            'Untracked': {
+                'color': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
+                'match': '??'
+            },
+            'Ignored': {
+                'color': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
+                'match': '!!'
+            },
+            'Unknown': {
+                'color': 'guifg=NONE guibg=NONE ctermfg=NONE ctermbg=NONE',
+                'match': 'X '
+            }
         }
+        min_column_length = 2 if self.raw_mode else 1
+        self.column_length = max(min_column_length,
+                                 self.vim.vars['defx_git#column_length'])
 
     def get(self, context: Context, candidate: dict) -> str:
         default = self.format('')
@@ -48,6 +75,12 @@ class Column(Base):
         if not entry:
             return default
 
+        return self.get_indicator(entry)
+
+    def get_indicator(self, entry: str) -> str:
+        if self.raw_mode:
+            return self.format(entry[:2])
+
         return self.format(
             self.indicators[self.get_indicator_name(entry[0], entry[1])]
         )
@@ -57,12 +90,17 @@ class Column(Base):
 
     def highlight(self) -> None:
         for name, icon in self.indicators.items():
-            self.vim.command((
-                'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
-            ).format(self.syntax_name, name, icon))
+            if self.raw_mode:
+                self.vim.command((
+                    'syntax match {0}_{1} /{2}/ contained containedin={0}'
+                ).format(self.syntax_name, name, self.colors[name]['match']))
+            else:
+                self.vim.command((
+                    'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
+                ).format(self.syntax_name, name, icon))
 
             self.vim.command('highlight default {0}_{1} {2}'.format(
-                self.syntax_name, name, self.colors[name]
+                self.syntax_name, name, self.colors[name]['color']
             ))
 
     def find_in_cache(self, candidate: dict) -> str:
