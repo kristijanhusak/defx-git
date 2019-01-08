@@ -90,6 +90,7 @@ class Column(Base):
 
     def highlight(self) -> None:
         for name, icon in self.indicators.items():
+            self.vim.command(f'silent! syntax clear {self.syntax_name}_{name}')
             if self.raw_mode:
                 self.vim.command((
                     'syntax match {0}_{1} /{2}/ contained containedin={0}'
