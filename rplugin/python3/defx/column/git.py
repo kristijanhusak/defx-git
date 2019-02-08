@@ -175,7 +175,7 @@ class Column(Base):
         try:
             p = subprocess.run(cmd, stdout=subprocess.PIPE,
                                stderr=subprocess.DEVNULL, cwd=cwd)
-        except subprocess.CalledProcessError:
+        except:
             return ''
 
         decoded = p.stdout.decode('utf-8')
