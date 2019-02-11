@@ -88,9 +88,11 @@ class Column(Base):
     def length(self, context: Context) -> int:
         return self.column_length
 
+    def syntaxes(self) -> typing.List[str]:
+        return [self.syntax_name + '_' + name for name in self.indicators]
+
     def highlight(self) -> None:
         for name, icon in self.indicators.items():
-            self.vim.command(f'silent! syntax clear {self.syntax_name}_{name}')
             if self.raw_mode:
                 self.vim.command((
                     'syntax match {0}_{1} /{2}/ contained containedin={0}'
