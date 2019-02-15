@@ -91,20 +91,22 @@ class Column(Base):
     def syntaxes(self) -> typing.List[str]:
         return [self.syntax_name + '_' + name for name in self.indicators]
 
-    def highlight(self) -> None:
+    def highlight_commands(self) -> typing.List[str]:
+        commands: typing.List[str] = []
         for name, icon in self.indicators.items():
             if self.raw_mode:
-                self.vim.command((
+                commands.append((
                     'syntax match {0}_{1} /{2}/ contained containedin={0}'
                 ).format(self.syntax_name, name, self.colors[name]['match']))
             else:
-                self.vim.command((
+                commands.append((
                     'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
                 ).format(self.syntax_name, name, icon))
 
-            self.vim.command('highlight default {0}_{1} {2}'.format(
+            commands.append('highlight default {0}_{1} {2}'.format(
                 self.syntax_name, name, self.colors[name]['color']
             ))
+        return commands
 
     def find_in_cache(self, candidate: dict) -> str:
         path = str(candidate['action__path']).replace(f'{self.git_root}/', '')
