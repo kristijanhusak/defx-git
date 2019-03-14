@@ -21,7 +21,7 @@ let g:defx_git#indicators = {
   \ 'Ignored'   : '☒',
   \ 'Deleted'   : '✖',
   \ 'Unknown'   : '?'
-  \ })
+  \ }
 ```
 
 ### g:defx_git#column_length
