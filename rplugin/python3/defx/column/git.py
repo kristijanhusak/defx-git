@@ -23,6 +23,7 @@ class Column(Base):
         self.indicators = self.vim.vars['defx_git#indicators']
         self.show_ignored = self.vim.vars['defx_git#show_ignored']
         self.raw_mode = self.vim.vars['defx_git#raw_mode']
+        self.indicatorWidth = self.vim.vars['defx_git#indicatorWidth']
         self.colors = {
             'Modified': {
                 'color': 'guifg=#fabd2f ctermfg=214',
