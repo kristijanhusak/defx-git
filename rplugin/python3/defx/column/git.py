@@ -62,7 +62,7 @@ class Column(Base):
                                  self.vim.vars['defx_git#column_length'])
 
     def get(self, context: Context, candidate: dict) -> str:
-        default = self.format('')
+        default = self.format('').ljust(self.column_length + self.indicatorWidth - 1)
         if candidate.get('is_root', False):
             self.cache_status(candidate['action__path'])
             return default
