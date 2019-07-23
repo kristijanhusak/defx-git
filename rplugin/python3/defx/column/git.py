@@ -21,6 +21,7 @@ class Column(Base):
         self.cache: typing.List[str] = []
         self.git_root = ''
         self.indicators = self.vim.vars['defx_git#indicators']
+        self.max_indicator_width = self.vim.vars['defx_git#max_indicator_width']
         self.show_ignored = self.vim.vars['defx_git#show_ignored']
         self.raw_mode = self.vim.vars['defx_git#raw_mode']
         self.colors = {
@@ -62,7 +63,7 @@ class Column(Base):
                                  self.vim.vars['defx_git#column_length'])
 
     def get(self, context: Context, candidate: dict) -> str:
-        default = self.format('')
+        default = self.format('').ljust(self.column_length + self.max_indicator_width - 1)
         if candidate.get('is_root', False):
             self.cache_status(candidate['action__path'])
             return default

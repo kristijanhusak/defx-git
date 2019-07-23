@@ -20,6 +20,10 @@ let g:defx_git#column_length = get(g:, 'defx_git#column_length', 1)
 let g:defx_git#show_ignored = get(g:, 'defx_git#show_ignored', 0)
 let g:defx_git#raw_mode = get(g:, 'defx_git#raw_mode', 0)
 
+if !exists('g:defx_git#indicator_width')
+  let g:defx_git#max_indicator_width = max(map(copy(g:defx_git#indicators), 'strwidth(v:val)'))
+endif
+
 let s:icons = join(values(g:defx_git#indicators), '\|')
 
 function! s:search(dir) abort
