@@ -8,11 +8,11 @@ Just append `git` to your columns when starting defx:
 ```
 
 ## Options
-### g:defx_git#indicators
+### Indicators
 
 Which indicators (icons) to use for each status. These are the defaults:
 ```vimL
-let g:defx_git#indicators = {
+call defx#custom#column('git', 'indicators', {
   \ 'Modified'  : '✹',
   \ 'Staged'    : '✚',
   \ 'Untracked' : '✭',
@@ -21,34 +21,34 @@ let g:defx_git#indicators = {
   \ 'Ignored'   : '☒',
   \ 'Deleted'   : '✖',
   \ 'Unknown'   : '?'
-  \ }
+  \ })
 ```
 
-### g:defx_git#column_length
+### Column-length
 
 How many space should git column take. Default is `1` (Defx adds a single space between columns):
 ```vimL
-let g:defx_git#column_length = 1
+call defx#custom#column('git', 'column_length', 1)
 ```
 Missing characters to match this length are populated with spaces, which means
 `✹` becomes `✹ `, etc.
 
 Note: Make sure indicators are not longer than the column_length
 
-### g:defx_git#show_ignored
+### Show ignored
 
 This flag determines if ignored files should be marked with indicator. Default is `false`:
 
 ```vimL
-let g:defx_git#show_ignored = 0
+call defx#custom#column('git', 'show_ignored', 0)
 ```
 
-### g:defx_git#raw_mode
+### Raw mode
 
 Show git status in raw mode (Same as first two chars of `git status --porcelain` command). Default is `0`:
 
 ```vimL
-let g:defx_git#raw_mode = 1
+call defx#custom#column('git', 'raw_mode', 0)
 ```
 
 ## Highlighting
