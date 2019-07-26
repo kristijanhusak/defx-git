@@ -18,12 +18,26 @@ class Column(Base):
         super().__init__(vim)
 
         self.name = 'git'
+        self.vars = {
+            'indicators': self.vim.vars.get('defx_git#indicators', {
+                'Modified': '✹',
+                'Staged': '✚',
+                'Untracked': '✭',
+                'Renamed': '➜',
+                'Unmerged': '═',
+                'Ignored': '☒',
+                'Deleted': '✖',
+                'Unknown': '?'
+            }),
+            'column_length': self.vim.vars.get('defx_git#column_length', 1),
+            'show_ignored': self.vim.vars.get('defx_git#show_ignored', False),
+            'raw_mode': self.vim.vars.get('defx_git#raw_mode', False),
+            'max_indicator_width': self.vim.vars.get(
+                'defx_git#max_indicator_width', None)
+        }
+
         self.cache: typing.List[str] = []
         self.git_root = ''
-        self.indicators = self.vim.vars['defx_git#indicators']
-        self.max_indicator_width = self.vim.vars['defx_git#max_indicator_width']
-        self.show_ignored = self.vim.vars['defx_git#show_ignored']
-        self.raw_mode = self.vim.vars['defx_git#raw_mode']
         self.colors = {
             'Modified': {
                 'color': 'guifg=#fabd2f ctermfg=214',
@@ -58,12 +72,17 @@ class Column(Base):
                 'match': 'X '
             }
         }
-        min_column_length = 2 if self.raw_mode else 1
-        self.column_length = max(min_column_length,
-                                 self.vim.vars['defx_git#column_length'])
+        min_column_length = 2 if self.vars['raw_mode'] else 1
+        self.column_length = max(min_column_length, self.vars['column_length'])
+
+    def on_init(self, context: Context) -> None:
+        if not self.vars.get('max_indicator_width'):
+            self.vars['max_indicator_width'] = len(
+                max(self.vars['indicators'].values(), key=len))
 
     def get(self, context: Context, candidate: dict) -> str:
-        default = self.format('').ljust(self.column_length + self.max_indicator_width - 1)
+        default = self.format('').ljust(
+            self.column_length + self.vars['max_indicator_width'] - 1)
         if candidate.get('is_root', False):
             self.cache_status(candidate['action__path'])
             return default
@@ -79,23 +98,25 @@ class Column(Base):
         return self.get_indicator(entry)
 
     def get_indicator(self, entry: str) -> str:
-        if self.raw_mode:
+        if self.vars['raw_mode']:
             return self.format(entry[:2])
 
+        state = self.get_indicator_name(entry[0], entry[1])
         return self.format(
-            self.indicators[self.get_indicator_name(entry[0], entry[1])]
+            self.vars['indicators'][state]
         )
 
     def length(self, context: Context) -> int:
         return self.column_length
 
     def syntaxes(self) -> typing.List[str]:
-        return [self.syntax_name + '_' + name for name in self.indicators]
+        return [
+            self.syntax_name + '_' + name for name in self.vars['indicators']]
 
     def highlight_commands(self) -> typing.List[str]:
         commands: typing.List[str] = []
-        for name, icon in self.indicators.items():
-            if self.raw_mode:
+        for name, icon in self.vars['indicators'].items():
+            if self.vars['raw_mode']:
                 commands.append((
                     'syntax match {0}_{1} /{2}/ contained containedin={0}'
                 ).format(self.syntax_name, name, self.colors[name]['match']))
@@ -134,7 +155,7 @@ class Column(Base):
             return None
 
         cmd = ['git', 'status', '--porcelain', '-u']
-        if self.show_ignored:
+        if self.vars['show_ignored']:
             cmd += ['--ignored']
 
         status = self.run_cmd(cmd, self.git_root)
