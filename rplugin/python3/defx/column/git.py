@@ -76,7 +76,11 @@ class Column(Base):
         self.column_length = max(min_column_length, self.vars['column_length'])
 
     def on_init(self, context: Context) -> None:
+        # Set vim global variable for search mappings matching indicators
+        self.vim.vars['defx_git_indicators'] = self.vars['indicators']
+
         if not self.vars.get('max_indicator_width'):
+            # Find longest indicator
             self.vars['max_indicator_width'] = len(
                 max(self.vars['indicators'].values(), key=len))
 
