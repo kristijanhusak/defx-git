@@ -19,7 +19,7 @@ class Column(Base):
 
         self.name = 'git'
         self.vars = {
-            'indicators': {
+            'indicators': self.vim.vars.get('defx_git#indicators', {
                 'Modified': '✹',
                 'Staged': '✚',
                 'Untracked': '✭',
@@ -28,14 +28,13 @@ class Column(Base):
                 'Ignored': '☒',
                 'Deleted': '✖',
                 'Unknown': '?'
-            },
-            'column_length': 1,
-            'show_ignored': False,
-            'raw_mode': False,
+            }),
+            'column_length': self.vim.vars.get('defx_git#column_length', 1),
+            'show_ignored': self.vim.vars.get('defx_git#show_ignored', False),
+            'raw_mode': self.vim.vars.get('defx_git#raw_mode', False),
+            'max_indicator_width': self.vim.vars.get(
+                'defx_git#max_indicator_width', None)
         }
-
-        self.vars['max_indicator_width'] = len(
-            max(self.vars['indicators'].values(), key=len))
 
         self.cache: typing.List[str] = []
         self.git_root = ''
@@ -75,6 +74,11 @@ class Column(Base):
         }
         min_column_length = 2 if self.vars['raw_mode'] else 1
         self.column_length = max(min_column_length, self.vars['column_length'])
+
+    def on_init(self, context: Context) -> None:
+        if not self.vars.get('max_indicator_width'):
+            self.vars['max_indicator_width'] = len(
+                max(self.vars['indicators'].values(), key=len))
 
     def get(self, context: Context, candidate: dict) -> str:
         default = self.format('').ljust(
