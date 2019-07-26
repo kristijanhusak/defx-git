@@ -6,8 +6,7 @@ endif
 let b:defx_git_loaded = 1
 
 function! s:search(dir) abort
-  let l:column_opts = defx#custom#_get().column
-  let l:icons = get(get(l:column_opts, 'git', {}), 'indicators', {})
+  let l:icons = get(g:, 'defx_git_indicators', {})
   let l:icons_pattern = join(values(l:icons), '\|')
 
   if !empty(l:icons_pattern)
