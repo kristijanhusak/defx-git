@@ -10,6 +10,7 @@ from defx.base.column import Base
 from defx.context import Context
 from neovim import Nvim
 from functools import cmp_to_key
+from pathlib import PurePath
 
 
 class Column(Base):
@@ -135,7 +136,8 @@ class Column(Base):
         return commands
 
     def find_in_cache(self, candidate: dict) -> str:
-        path = str(candidate['action__path']).replace(f'{self.git_root}/', '')
+        action_path = PurePath(candidate['action__path']).as_posix()
+        path = str(action_path).replace(f'{self.git_root}/', '')
         path += '/' if candidate['is_directory'] else ''
         for item in self.cache:
             item_path = item[3:]
@@ -151,9 +153,9 @@ class Column(Base):
         self.cache = []
 
         if not self.git_root or not str(path).startswith(self.git_root):
-            self.git_root = self.run_cmd(
+            self.git_root = PurePath(self.run_cmd(
                 ['git', 'rev-parse', '--show-toplevel'], path
-            )
+            )).as_posix()
 
         if not self.git_root:
             return None
