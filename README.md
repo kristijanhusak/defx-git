@@ -91,14 +91,19 @@ hi Defx_git_Untracked guifg=#FF0000
 
 ## Mappings
 
-There are two mappings:
+There are 5 mappings:
 
 * `<Plug>(defx-git-next)` - Goes to the next file that has a git status
 * `<Plug>(defx-git-prev)` - Goes to the previous file that has a git status
+* `<Plug>(defx-git-stage)` - Stages the file/directory under cursor
+* `<Plug>(defx-git-reset)` - Unstages the file/directory under cursor
+* `<Plug>(defx-git-discard)` - Discards all changes to file/directory under cursor
 
 If these are not manually mapped by the user, defaults are:
-
 ```viml
 nnoremap <buffer><silent> [c <Plug>(defx-git-prev)
 nnoremap <buffer><silent> ]c <Plug>(defx-git-next)
+nnoremap <buffer><silent> ]a <Plug>(defx-git-stage)
+nnoremap <buffer><silent> ]r <Plug>(defx-git-reset)
+nnoremap <buffer><silent> ]d <Plug>(defx-git-discard)
 ```
