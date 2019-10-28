@@ -1,3 +1,10 @@
+if exists('*defx#redraw')
+  augroup defx_git
+    autocmd!
+    autocmd BufWritePost * call defx#redraw()
+  augroup END
+endif
+
 scriptencoding utf-8
 if exists('b:defx_git_loaded')
   finish
