@@ -20,7 +20,7 @@ class Column(Base):
 
         self.name = 'git'
         self.vars = {
-            'indicators': self.vim.vars.get('defx_git#indicators', {
+            'indicators': {
                 'Modified': '✹',
                 'Staged': '✚',
                 'Untracked': '✭',
@@ -29,13 +29,19 @@ class Column(Base):
                 'Ignored': '☒',
                 'Deleted': '✖',
                 'Unknown': '?'
-            }),
-            'column_length': self.vim.vars.get('defx_git#column_length', 1),
-            'show_ignored': self.vim.vars.get('defx_git#show_ignored', False),
-            'raw_mode': self.vim.vars.get('defx_git#raw_mode', False),
-            'max_indicator_width': self.vim.vars.get(
-                'defx_git#max_indicator_width', None)
+            },
+            'column_length': 1,
+            'show_ignored': False,
+            'raw_mode': False,
+            'max_indicator_width': None
         }
+
+        custom_opts = ['indicators', 'column_length', 'show_ignored',
+                       'raw_mode', 'max_indicator_width']
+
+        for opt in custom_opts:
+            if 'defx_git#' + opt in self.vim.vars:
+                self.vars[opt] = self.vim.vars['defx_git#' + opt]
 
         self.cache: typing.List[str] = []
         self.git_root = ''
