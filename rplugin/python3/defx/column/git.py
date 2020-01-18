@@ -8,6 +8,7 @@ import typing
 import subprocess
 from defx.base.column import Base
 from defx.context import Context
+from defx.view import View
 from neovim import Nvim
 from functools import cmp_to_key
 from pathlib import PurePath
@@ -82,7 +83,7 @@ class Column(Base):
         min_column_length = 2 if self.vars['raw_mode'] else 1
         self.column_length = max(min_column_length, self.vars['column_length'])
 
-    def on_init(self, context: Context) -> None:
+    def on_init(self, view: View, context: Context) -> None:
         # Set vim global variable for search mappings matching indicators
         self.vim.vars['defx_git_indicators'] = self.vars['indicators']
 
