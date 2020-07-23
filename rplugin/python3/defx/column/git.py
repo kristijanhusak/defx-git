@@ -6,10 +6,10 @@
 
 import typing
 import subprocess
-from defx.base.column import Base
+from defx.base.column import Base, Highlights
 from defx.context import Context
 from defx.view import View
-from neovim import Nvim
+from defx.util import Nvim, Candidate, len_bytes
 from functools import cmp_to_key
 from pathlib import PurePath
 
@@ -20,6 +20,7 @@ class Column(Base):
         super().__init__(vim)
 
         self.name = 'git'
+        self.has_get_with_highlights = True
         self.vars = {
             'indicators': {
                 'Modified': '✹',
@@ -80,8 +81,7 @@ class Column(Base):
                 'match': 'X '
             }
         }
-        min_column_length = 2 if self.vars['raw_mode'] else 1
-        self.column_length = max(min_column_length, self.vars['column_length'])
+        self.syn_name = 'Defx_git'
 
     def on_init(self, view: View, context: Context) -> None:
         # Set vim global variable for search mappings matching indicators
@@ -92,9 +92,20 @@ class Column(Base):
             self.vars['max_indicator_width'] = len(
                 max(self.vars['indicators'].values(), key=len))
 
-    def get(self, context: Context, candidate: dict) -> str:
-        default = self.format('').ljust(
-            self.column_length + self.vars['max_indicator_width'] - 1)
+        min_column_length = 2 if self.vars['raw_mode'] else 1
+        self.column_length = max(min_column_length, self.vars['column_length'])
+        if self.syntax_name != '':
+            self.syn_name = self.syntax_name
+        for cmd in self.get_highlight_commands(True):
+            self.vim.command(cmd)
+
+    def get_with_highlights(
+            self, context: Context, candidate: Candidate
+    ) -> typing.Tuple[str, Highlights]:
+        default = (
+            ''.ljust(self.column_length + self.vars['max_indicator_width'] - 1),
+            []
+        )
         if candidate.get('is_root', False):
             self.cache_status(candidate['action__path'])
             return default
@@ -110,36 +121,39 @@ class Column(Base):
         return self.get_indicator(entry)
 
     def get_indicator(self, entry: str) -> str:
-        if self.vars['raw_mode']:
-            return self.format(entry[:2])
-
         state = self.get_indicator_name(entry[0], entry[1])
-        return self.format(
-            self.vars['indicators'][state]
-        )
+
+        if self.vars['raw_mode']:
+            return self.format(entry[:2], state)
+
+        return self.format(self.vars['indicators'][state], state)
 
     def length(self, context: Context) -> int:
         return self.column_length
 
-    def syntaxes(self) -> typing.List[str]:
-        return [
-            self.syntax_name + '_' + name for name in self.vars['indicators']]
-
     def highlight_commands(self) -> typing.List[str]:
+        return self.get_highlight_commands()
+
+    def get_highlight_commands(self, skip_match = False) -> typing.List[str]:
         commands: typing.List[str] = []
+        if not skip_match:
+            self.syn_name = self.syntax_name
         for name, icon in self.vars['indicators'].items():
-            if self.vars['raw_mode']:
-                commands.append((
-                    'syntax match {0}_{1} /{2}/ contained containedin={0}'
-                ).format(self.syntax_name, name, self.colors[name]['match']))
-            else:
-                commands.append((
-                    'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
-                ).format(self.syntax_name, name, icon))
+            commands.append(('syntax clear {0}_{1}').format(self.syn_name, name))
+            if not skip_match:
+                if self.vars['raw_mode']:
+                    commands.append((
+                        'syntax match {0}_{1} /{2}/ contained containedin={0}'
+                    ).format(self.syn_name, name, self.colors[name]['match']))
+                else:
+                    commands.append((
+                        'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
+                    ).format(self.syn_name, name, icon))
 
             commands.append('highlight default {0}_{1} {2}'.format(
-                self.syntax_name, name, self.colors[name]['color']
+                self.syn_name, name, self.colors[name]['color']
             ))
+
         return commands
 
     def find_in_cache(self, candidate: dict) -> str:
@@ -188,8 +202,14 @@ class Column(Base):
 
         return 1
 
-    def format(self, column: str) -> str:
-        return format(column, f'<{self.column_length}')
+    def format(self, column: str, indicator_name) -> str:
+        icon = format(column, f'<{self.column_length}')
+        return (icon,
+            [(
+                f'{self.syn_name}_{indicator_name}',
+                self.start, len_bytes(icon)
+            )]
+        )
 
     def get_indicator_name(self, us: str, them: str) -> str:
         if us == '?' and them == '?':
