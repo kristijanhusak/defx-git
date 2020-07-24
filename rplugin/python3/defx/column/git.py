@@ -139,8 +139,8 @@ class Column(Base):
         if not skip_match:
             self.syn_name = self.syntax_name
         for name, icon in self.vars['indicators'].items():
-            commands.append(('syntax clear {0}_{1}').format(self.syn_name, name))
             if not skip_match:
+                commands.append(('syntax clear {0}_{1}').format(self.syn_name, name))
                 if self.vars['raw_mode']:
                     commands.append((
                         'syntax match {0}_{1} /{2}/ contained containedin={0}'
