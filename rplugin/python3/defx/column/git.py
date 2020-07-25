@@ -81,7 +81,6 @@ class Column(Base):
                 'match': 'X '
             }
         }
-        self.syn_name = 'Defx_git'
 
     def on_init(self, view: View, context: Context) -> None:
         # Set vim global variable for search mappings matching indicators
@@ -94,10 +93,6 @@ class Column(Base):
 
         min_column_length = 2 if self.vars['raw_mode'] else 1
         self.column_length = max(min_column_length, self.vars['column_length'])
-        if self.syntax_name != '':
-            self.syn_name = self.syntax_name
-        for cmd in self.get_highlight_commands(True):
-            self.vim.command(cmd)
 
     def get_with_highlights(
             self, context: Context, candidate: Candidate
@@ -132,26 +127,20 @@ class Column(Base):
         return self.column_length
 
     def highlight_commands(self) -> typing.List[str]:
-        return self.get_highlight_commands()
-
-    def get_highlight_commands(self, skip_match = False) -> typing.List[str]:
         commands: typing.List[str] = []
-        if not skip_match:
-            self.syn_name = self.syntax_name
         for name, icon in self.vars['indicators'].items():
-            if not skip_match:
-                commands.append(('syntax clear {0}_{1}').format(self.syn_name, name))
-                if self.vars['raw_mode']:
-                    commands.append((
-                        'syntax match {0}_{1} /{2}/ contained containedin={0}'
-                    ).format(self.syn_name, name, self.colors[name]['match']))
-                else:
-                    commands.append((
-                        'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
-                    ).format(self.syn_name, name, icon))
+            commands.append(('silent! syntax clear {0}_{1}').format(self.syntax_name, name))
+            if self.vars['raw_mode']:
+                commands.append((
+                    'syntax match {0}_{1} /{2}/ contained containedin={0}'
+                ).format(self.syntax_name, name, self.colors[name]['match']))
+            else:
+                commands.append((
+                    'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
+                ).format(self.syntax_name, name, icon))
 
             commands.append('highlight default {0}_{1} {2}'.format(
-                self.syn_name, name, self.colors[name]['color']
+                self.syntax_name, name, self.colors[name]['color']
             ))
 
         return commands
@@ -206,7 +195,7 @@ class Column(Base):
         icon = format(column, f'<{self.column_length}')
         return (icon,
             [(
-                f'{self.syn_name}_{indicator_name}',
+                f'{self.syntax_name}_{indicator_name}',
                 self.start, len_bytes(icon)
             )]
         )
