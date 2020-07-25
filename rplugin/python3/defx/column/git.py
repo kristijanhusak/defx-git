@@ -129,18 +129,20 @@ class Column(Base):
     def highlight_commands(self) -> typing.List[str]:
         commands: typing.List[str] = []
         for name, icon in self.vars['indicators'].items():
-            commands.append(('silent! syntax clear {0}_{1}').format(self.syntax_name, name))
+            commands.append(('silent! syntax clear {0}_{1}')
+                            .format(self.highlight_name, name))
             if self.vars['raw_mode']:
                 commands.append((
-                    'syntax match {0}_{1} /{2}/ contained containedin={0}'
-                ).format(self.syntax_name, name, self.colors[name]['match']))
+                    'syntax match {0}_{1} /{2}/ contained containedin={3}'
+                ).format(self.highlight_name, name, self.colors[name]['match'],
+                         self.syntax_name))
             else:
                 commands.append((
-                    'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
-                ).format(self.syntax_name, name, icon))
+                    'syntax match {0}_{1} /[{2}]/ contained containedin={3}'
+                ).format(self.highlight_name, name, icon, self.syntax_name))
 
             commands.append('highlight default {0}_{1} {2}'.format(
-                self.syntax_name, name, self.colors[name]['color']
+                self.highlight_name, name, self.colors[name]['color']
             ))
 
         return commands
@@ -195,7 +197,7 @@ class Column(Base):
         icon = format(column, f'<{self.column_length}')
         return (icon,
             [(
-                f'{self.syntax_name}_{indicator_name}',
+                f'{self.highlight_name}_{indicator_name}',
                 self.start, len_bytes(icon)
             )]
         )
