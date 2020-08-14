@@ -58,6 +58,14 @@ Show git status in raw mode (Same as first two chars of `git status --porcelain`
 call defx#custom#column('git', 'raw_mode', 0)
 ```
 
+### Change git commit
+
+Change the git commit the files are diffed against (SHA-1, branchname, etc.). Default is `'HEAD'`:
+
+```viml
+call defx#custom#column('git', 'git_commit', 'HEAD')
+```
+
 ### Max Indicator Width
 
 The number of characters to pad the git column. If not specified, the default
