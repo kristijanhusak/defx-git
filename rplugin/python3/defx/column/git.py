@@ -35,7 +35,8 @@ class Column(Base):
             'column_length': 1,
             'show_ignored': False,
             'raw_mode': False,
-            'max_indicator_width': None
+            'max_indicator_width': None,
+            'git_commit': 'HEAD',
         }
 
         custom_opts = ['indicators', 'column_length', 'show_ignored',
@@ -172,12 +173,34 @@ class Column(Base):
         if not self.git_root:
             return None
 
-        cmd = ['git', 'status', '--porcelain', '-u']
-        if self.vars['show_ignored']:
-            cmd += ['--ignored']
+        if self.vars['git_commit'].upper() != 'HEAD':
+            diff_cmd = ['git', 'diff', '--name-status', self.vars['git_commit']]
+            results = [
+                f" {line}".replace("\t", " ")
+                for line
+                in self.run_cmd(diff_cmd, self.git_root).split('\n')
+                if line != ''
+            ]
 
-        status = self.run_cmd(cmd, self.git_root)
-        results = [line for line in status.split('\n') if line != '']
+            untracked_cmd = ['git', 'ls-files', '--exclude-standard', '--others']
+            if self.vars['show_ignored']:
+                untracked_cmd += ['--ignored']
+
+            results += [
+                f"?? {line}"
+                for line
+                in self.run_cmd(untracked_cmd, self.git_root).split('\n')
+                if line != ''
+            ]
+
+        else:
+            cmd = ['git', 'status', '--porcelain', '-u']
+            if self.vars['show_ignored']:
+                cmd += ['--ignored']
+            status = self.run_cmd(cmd, self.git_root)
+
+            results = [line.replace('\t', ' ') for line in status.split('\n') if line != '']
+
         self.cache = sorted(results, key=cmp_to_key(self.sort))
 
     def sort(self, a, b) -> int:
