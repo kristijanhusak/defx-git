@@ -154,6 +154,9 @@ class Column(Base):
         path += '/' if candidate['is_directory'] else ''
         for item in self.cache:
             item_path = item[3:]
+            if ' ' in item_path and item_path[0] == '"':
+                item_path = item_path.strip('"')
+
             if item[0] == 'R':
                 item_path = item_path.split(' -> ')[1]
 
