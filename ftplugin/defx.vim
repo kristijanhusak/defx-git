@@ -24,9 +24,9 @@ endfunction
 
 function! s:git_cmd(cmd) abort
   let l:actions = {
-        \ 'stage': '!git add',
-        \ 'reset': '!git reset',
-        \ 'discard': '!git checkout --'
+        \ 'stage': 'git add',
+        \ 'reset': 'git reset',
+        \ 'discard': 'git checkout --'
         \ }
   let l:candidate = defx#get_candidate()
   let l:path = get(l:candidate, 'action__path')
@@ -38,7 +38,7 @@ function! s:git_cmd(cmd) abort
 
   let l:cmd = l:actions[a:cmd].' '.l:path
   if a:cmd !=? 'discard'
-    call execute(l:cmd)
+    call system(l:cmd)
     return defx#call_action('redraw')
   endif
 
@@ -49,10 +49,10 @@ function! s:git_cmd(cmd) abort
   let l:status = system('git status --porcelain '.l:path)
   " File must be unstaged before discarding
   if !empty(l:status[0])
-    call execute(l:actions['reset'].' '.l:path)
+    call system(l:actions['reset'].' '.l:path)
   endif
 
-  call execute(l:cmd)
+  call system(l:cmd)
   return defx#call_action('redraw')
 endfunction
 
