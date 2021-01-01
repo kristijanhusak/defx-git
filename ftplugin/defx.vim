@@ -29,7 +29,7 @@ function! s:git_cmd(cmd) abort
         \ 'discard': 'git checkout --'
         \ }
   let l:candidate = defx#get_candidate()
-  let l:path = get(l:candidate, 'action__path')
+  let l:path = shellescape(get(l:candidate, 'action__path'))
   let l:word = get(l:candidate, 'word')
   let l:is_dir = get(l:candidate, 'is_directory')
   if empty(l:path)
