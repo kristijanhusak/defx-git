@@ -23,9 +23,7 @@ class Column(Base):
         self.has_get_with_highlights = True
         self.vars = {
             'indicators': {
-                'Modified': '✹',
-                'Staged': '✚',
-                'Untracked': '✭',
+                'Modified': '✹', 'Staged': '✚', 'Untracked': '✭',
                 'Renamed': '➜',
                 'Unmerged': '═',
                 'Ignored': '☒',
@@ -160,7 +158,7 @@ class Column(Base):
             if item[0] == 'R':
                 item_path = item_path.split(' -> ')[1]
 
-            if item_path.startswith(path):
+            if item_path == path:
                 return item
 
         return ''
